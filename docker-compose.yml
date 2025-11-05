@@ -1,0 +1,87 @@
+# Simplified Supabase Local Development Stack for HaexHub Sync Server
+# Based on https://github.com/supabase/supabase/blob/master/docker/docker-compose.yml
+
+services:
+  # PostgreSQL Database with Supabase extensions
+  db:
+    image: supabase/postgres:15.8.1.085
+    container_name: haex-sync-db
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    command:
+      - postgres
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - log_min_messages=fatal
+    environment:
+      POSTGRES_HOST: /var/run/postgresql
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PORT: 5432
+    volumes:
+      - db_data:/var/lib/postgresql/data:Z
+    healthcheck:
+      test: pg_isready -U postgres -h localhost
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Supabase Studio - Database Management UI
+  studio:
+    image: supabase/studio:2025.10.27-sha-85b84e0
+    container_name: haex-sync-studio
+    restart: unless-stopped
+    ports:
+      - "${STUDIO_PORT:-3001}:3000"
+    environment:
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: postgres
+      DEFAULT_ORGANIZATION_NAME: HaexHub
+      DEFAULT_PROJECT_NAME: HaexHub Sync Server
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_PUBLIC_URL: http://localhost:${KONG_HTTP_PORT:-8000}
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0
+      SUPABASE_SERVICE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU
+    depends_on:
+      db:
+        condition: service_healthy
+      meta:
+        condition: service_started
+
+  # pg_meta - PostgreSQL metadata API (required by Studio)
+  meta:
+    image: supabase/postgres-meta:v0.93.1
+    container_name: haex-sync-meta
+    restart: unless-stopped
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: postgres
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Kong API Gateway (optional, but required for Studio)
+  kong:
+    image: kong:2.8.1
+    container_name: haex-sync-kong
+    restart: unless-stopped
+    ports:
+      - "${KONG_HTTP_PORT:-8000}:8000"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+    volumes:
+      - ./config/kong.yml:/home/kong/kong.yml:ro
+
+volumes:
+  db_data:

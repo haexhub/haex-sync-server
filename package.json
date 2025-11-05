@@ -1,0 +1,31 @@
+{
+  "name": "haex-sync-server",
+  "version": "0.1.0",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --hot index.ts",
+    "start": "bun run index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.31.6"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.7.4",
+    "@supabase/auth-helpers-shared": "^0.7.0",
+    "@supabase/supabase-js": "^2.79.0",
+    "drizzle-orm": "^0.44.7",
+    "hono": "^4.10.4",
+    "postgres": "^3.4.7",
+    "zod": "^4.1.12"
+  }
+}
