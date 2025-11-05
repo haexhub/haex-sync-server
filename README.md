@@ -1,14 +1,15 @@
 # HaexHub Sync Server
 
-Backend sync server for [HaexHub](https://github.com/haexhub/haex-hub) - A local-first encrypted vault with multi-device sync.
+End-to-end encrypted sync backend for [HaexHub](https://github.com/haexhub/haex-hub) using Supabase.
 
 ## Features
 
 - 🔐 **End-to-End Encryption** - All CRDT logs are encrypted client-side before syncing
 - 🔑 **Hybrid Vault Key Management** - Password-encrypted vault keys stored securely
 - 🚀 **High Performance** - Built with Bun and Hono for maximum speed
-- 🐘 **PostgreSQL + Drizzle ORM** - Type-safe database queries
+- 🛡️ **Row Level Security (RLS)** - Users can only access their own data
 - 🔄 **CRDT-based Sync** - Conflict-free replicated data types for seamless multi-device sync
+- 📡 **Realtime Updates** - Supabase Realtime for instant synchronization
 - 🐳 **Docker Ready** - Includes Supabase local development stack
 - 📦 **Self-Hostable** - Run on your own infrastructure
 
@@ -16,17 +17,19 @@ Backend sync server for [HaexHub](https://github.com/haexhub/haex-hub) - A local
 
 ```
 HaexHub Client (Desktop/Mobile)
-    ↓ HTTPS (Encrypted CRDT Logs)
+    ↓ HTTPS + JWT (Encrypted CRDT Logs)
 HaexHub Sync Server (this repo)
-    ↓ PostgreSQL
-Supabase / Self-Hosted PostgreSQL
+    ↓ PostgreSQL with RLS
+Supabase (Auth + Database + Realtime)
 ```
 
 ### Key Concepts
 
 - **Zero-Knowledge Architecture**: Server never sees unencrypted data
-- **Vault Key**: 256-bit AES key generated client-side, encrypted with user password
+- **Vault Key**: 256-bit AES key generated client-side, encrypted with user password (PBKDF2 600k iterations)
 - **CRDT Logs**: All changes are logged as encrypted CRDT operations
+- **Supabase Auth**: Client authenticates directly with Supabase, server validates JWT tokens
+- **Row Level Security**: PostgreSQL RLS ensures users can only access their own data
 - **Sequence Numbers**: Auto-incrementing per-user sequence for efficient sync
 
 ## Quick Start

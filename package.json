@@ -9,7 +9,8 @@
     "start": "bun run index.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
+    "db:push": "drizzle-kit push && bun run db:rls",
+    "db:rls": "bun run scripts/apply-rls.ts",
     "db:studio": "drizzle-kit studio"
   },
   "devDependencies": {
